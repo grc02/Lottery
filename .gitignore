@@ -1,1 +1,14 @@
-node_modules/
+# hardhat
+artifacts
+cache
+deployments
+node_modules
+coverage
+coverage.json
+typechain
+
+.env
+bin/
+build/
+lint/
+gas-report.txt

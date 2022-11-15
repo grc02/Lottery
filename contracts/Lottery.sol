@@ -2,19 +2,35 @@
 pragma solidity ^0.8.17;
 
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 
 error Lottery__NotEnoughETH();
 
 contract Lottery is VRFConsumerBaseV2 {
     uint256 private immutable i_entranceFee;
     address[] internal s_participants;
+    VRFCoordinatorV2Interface private immutable i_VRFCoordinator;
+    bytes32 private immutable i_gasLane;
+    uint64 private immutable i_subscriptionId;
+    uint32 private immutable i_callbackGasLimit;
+    uint32 private constant NUM_WORDS = 1;
+    uint16 private constant REQUEST_CONFIRMATIONS = 3;
 
     event lotteryEntered(address indexed participant);
+    event randomnessRequested(uint256 indexed requestedId);
 
-    constructor(uint256 entranceFee, address VRFCordinatorV2)
-        VRFConsumerBaseV2(VRFCordinatorV2)
-    {
+    constructor(
+        address VRFCordinatorV2,
+        uint256 entranceFee,
+        bytes32 gasLane,
+        uint64 subscriptionId,
+        uint32 callbackGasLimit
+    ) VRFConsumerBaseV2(VRFCordinatorV2) {
         i_entranceFee = entranceFee;
+        i_VRFCoordinator = VRFCoordinatorV2Interface(VRFCordinatorV2);
+        i_gasLane = gasLane;
+        i_subscriptionId = subscriptionId;
+        i_callbackGasLimit = callbackGasLimit;
     }
 
     function enterLottery() external payable {
@@ -25,7 +41,17 @@ contract Lottery is VRFConsumerBaseV2 {
         emit lotteryEntered(msg.sender);
     }
 
-    function requestRandomWinner() external {}
+    function requestRandomWinner() external {
+        uint256 requestId = i_VRFCoordinator.requestRandomWords(
+            i_gasLane,
+            i_subscriptionId,
+            REQUEST_CONFIRMATIONS,
+            i_callbackGasLimit,
+            NUM_WORDS
+        );
+
+        emit randomnessRequested(requestId);
+    }
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords)
         internal

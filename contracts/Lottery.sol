@@ -5,6 +5,7 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 
 error Lottery__NotEnoughETH();
+error Lottery__TransferFailed();
 
 contract Lottery is VRFConsumerBaseV2 {
     uint256 private immutable i_entranceFee;
@@ -16,8 +17,11 @@ contract Lottery is VRFConsumerBaseV2 {
     uint32 private constant NUM_WORDS = 1;
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
 
+    address private s_latestWinner;
+
     event lotteryEntered(address indexed participant);
     event randomnessRequested(uint256 indexed requestedId);
+    event winnerPicked(address indexed latestWinner);
 
     constructor(
         address VRFCordinatorV2,
@@ -53,10 +57,22 @@ contract Lottery is VRFConsumerBaseV2 {
         emit randomnessRequested(requestId);
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords)
-        internal
-        override
-    {}
+    function fulfillRandomWords(
+        uint256, /* requestId */
+        uint256[] memory randomWords
+    ) internal override {
+        uint256 winnerIndex = randomWords[0] % s_participants.length;
+        address winner = s_participants[winnerIndex];
+        s_latestWinner = winner;
+
+        (bool success, ) = payable(winner).call{value: address(this).balance}(
+            ""
+        );
+        if (!success) {
+            revert Lottery__TransferFailed();
+        }
+        emit winnerPicked(winner);
+    }
 
     function getEntranceFee() external view returns (uint256) {
         return i_entranceFee;

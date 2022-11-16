@@ -8,6 +8,7 @@ import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
 error Lottery__NotEnoughETH();
 error Lottery__TransferFailed();
 error Lottery__NotOpen();
+error Lottery__checkUpkeepNotCalled();
 
 contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
     enum LotteryState {
@@ -29,7 +30,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
     LotteryState private s_lotteryState;
 
     event lotteryEntered(address indexed participant);
-    event randomnessRequested(uint256 indexed requestedId);
+    event upkeepPerformed(uint256 indexed requestedId);
     event winnerPicked(address indexed latestWinner);
 
     constructor(
@@ -65,7 +66,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
     function checkUpkeep(
         bytes calldata /* checkData */
     )
-        external
+        public
         view
         override
         returns (
@@ -80,7 +81,17 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         upkeepNeeded = (isOpen && timePassed && hasParticipants && hasBalance);
     }
 
-    function requestRandomWinner() external {
+    function performUpkeep(bytes calldata performData) external override {
+        if ((block.timestamp - s_lastTimeStamp) > i_interval) {
+            s_lastTimeStamp = block.timestamp;
+        }
+
+        (bool isUpkeepCalled, ) = checkUpkeep(performData);
+
+        if (isUpkeepCalled) {
+            revert Lottery__checkUpkeepNotCalled();
+        }
+
         s_lotteryState = LotteryState.CALCULATING;
         uint256 requestId = i_VRFCoordinator.requestRandomWords(
             i_gasLane,
@@ -90,7 +101,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
             NUM_WORDS
         );
 
-        emit randomnessRequested(requestId);
+        emit upkeepPerformed(requestId);
     }
 
     function fulfillRandomWords(

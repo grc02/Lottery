@@ -5,6 +5,7 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
 
+/* Errors */
 error Lottery__NotEnoughETH();
 error Lottery__TransferFailed();
 error Lottery__NotOpen();
@@ -15,12 +16,20 @@ error Lottery__checkUpkeepNotCalled(
     uint256 contractBalance
 );
 
+/**@title Lottery Contract
+ * @author Georgi Chonkov
+ * @notice This contract is for creating a sample lottery contract
+ * @dev This implements the Chainlink VRF Version 2 and Chainlink Automation
+ */
 contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
+    /* Type declarations */
     enum LotteryState {
         OPEN,
         CALCULATING
     }
 
+    /* State variables */
+    // Chainlink variables
     uint256 private immutable i_entranceFee;
     VRFCoordinatorV2Interface private immutable i_VRFCoordinator;
     bytes32 private immutable i_gasLane;
@@ -30,15 +39,18 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint256 public immutable i_interval;
 
+    // Lottery contract variables
     address[] internal s_participants;
     uint256 public s_lastTimeStamp;
     address private s_latestWinner;
     LotteryState private s_lotteryState;
 
+    /* Events */
     event lotteryEntered(address indexed participant);
     event upkeepPerformed(uint256 indexed requestedId);
     event winnerPicked(address indexed latestWinner);
 
+    /* Functions */
     constructor(
         address VRFCordinatorV2,
         uint256 entranceFee,
@@ -135,6 +147,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         emit winnerPicked(winner);
     }
 
+    /* Getter Functions */
     function getEntranceFee() external view returns (uint256) {
         return i_entranceFee;
     }
@@ -145,5 +158,17 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
 
     function getLatestWinner() external view returns (address) {
         return s_latestWinner;
+    }
+
+    function getLotteryState() external view returns (LotteryState) {
+        return s_lotteryState;
+    }
+
+    function getInterval() public view returns (uint256) {
+        return i_interval;
+    }
+
+    function getNumberOfPlayers() public view returns (uint256) {
+        return s_participants.length;
     }
 }

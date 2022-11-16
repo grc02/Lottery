@@ -8,7 +8,12 @@ import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
 error Lottery__NotEnoughETH();
 error Lottery__TransferFailed();
 error Lottery__NotOpen();
-error Lottery__checkUpkeepNotCalled();
+error Lottery__checkUpkeepNotCalled(
+    uint256 lotteryState,
+    uint256 currentTimeStamp,
+    uint256 numOfParticipants,
+    uint256 contractBalance
+);
 
 contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
     enum LotteryState {
@@ -17,15 +22,16 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
     }
 
     uint256 private immutable i_entranceFee;
-    address[] internal s_participants;
     VRFCoordinatorV2Interface private immutable i_VRFCoordinator;
     bytes32 private immutable i_gasLane;
     uint64 private immutable i_subscriptionId;
     uint32 private immutable i_callbackGasLimit;
     uint32 private constant NUM_WORDS = 1;
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
-    uint256 public s_lastTimeStamp;
     uint256 public immutable i_interval;
+
+    address[] internal s_participants;
+    uint256 public s_lastTimeStamp;
     address private s_latestWinner;
     LotteryState private s_lotteryState;
 
@@ -89,7 +95,12 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         (bool isUpkeepCalled, ) = checkUpkeep(performData);
 
         if (isUpkeepCalled) {
-            revert Lottery__checkUpkeepNotCalled();
+            revert Lottery__checkUpkeepNotCalled(
+                uint256(s_lotteryState),
+                block.timestamp,
+                s_participants.length,
+                address(this).balance
+            );
         }
 
         s_lotteryState = LotteryState.CALCULATING;
@@ -113,6 +124,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         s_latestWinner = winner;
         s_lotteryState = LotteryState.OPEN;
         s_participants = new address[](0);
+        s_lastTimeStamp = block.timestamp;
 
         (bool success, ) = payable(winner).call{value: address(this).balance}(
             ""

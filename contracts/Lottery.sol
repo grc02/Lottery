@@ -24,7 +24,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
     uint32 private constant NUM_WORDS = 1;
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint256 public s_lastTimeStamp;
-    uint256 public s_interval;
+    uint256 public immutable i_interval;
     address private s_latestWinner;
     LotteryState private s_lotteryState;
 
@@ -45,7 +45,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         i_gasLane = gasLane;
         i_subscriptionId = subscriptionId;
         i_callbackGasLimit = callbackGasLimit;
-        s_interval = interval;
+        i_interval = interval;
         s_lastTimeStamp = block.timestamp;
         s_lotteryState = LotteryState.OPEN;
     }
@@ -73,7 +73,11 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
             bytes memory /* performData */
         )
     {
-        upkeepNeeded = (block.timestamp - s_lastTimeStamp) > s_interval;
+        bool isOpen = (s_lotteryState == LotteryState(0));
+        bool timePassed = ((block.timestamp - s_lastTimeStamp) > i_interval);
+        bool hasParticipants = (s_participants.length > 0);
+        bool hasBalance = (address(this).balance > 0);
+        upkeepNeeded = (isOpen && timePassed && hasParticipants && hasBalance);
     }
 
     function requestRandomWinner() external {

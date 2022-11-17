@@ -22,17 +22,11 @@ const networkConfig = {
         callbackGasLimit: "500000", // 500,000 gas
         vrfCoordinatorV2: "0x2Ca8E0C643bDe4C2E08ab1fA0da3401AdAD7734D",
     },
-    1: {
-        name: "mainnet",
-        keepersUpdateInterval: "30",
-    },
 };
 
 const developmentChains = ["hardhat", "localhost"];
-const FEE = 100;
 
 module.exports = {
     networkConfig,
     developmentChains,
-    FEE,
 };

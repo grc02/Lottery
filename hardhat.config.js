@@ -15,11 +15,9 @@ module.exports = {
     networks: {
         hardhat: {
             chainId: 31337,
-            blockConfirmations: 1,
         },
         goerli: {
             chainId: 5,
-            blockConfirmations: 5,
             url: GOERLI_PRC_URL,
             accounts: [PRIVATE_KEY],
         },

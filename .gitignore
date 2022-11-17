@@ -12,3 +12,4 @@ bin/
 build/
 lint/
 gas-report.txt
+.vscode/

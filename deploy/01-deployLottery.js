@@ -1,34 +1,32 @@
-const { network, getNamedAccounts, deployments } = require("hardhat");
+const { network, getNamedAccounts, deployments, ethers } = require("hardhat");
 const { networkConfig, developmentChains } = require("../helper-hardhat-config");
-const { deploy, log } = deployments;
-const chainId = network.config.chainId;
+const { verify } = require("../utils/verify");
 
-function getArgs() {
-    entranceFee = networkConfig[chainId]["entranceFee"];
-    gasLane = networkConfig[chainId]["gasLane"];
-    subscriptionId = networkConfig[chainId]["subscriptionId"];
-    callbackGasLimit = networkConfig[chainId]["callbackGasLimit"];
-    keepersUpdateInterval = networkConfig[chainId]["keepersUpdateInterval"];
-    return [entranceFee, gasLane, subscriptionId, callbackGasLimit, keepersUpdateInterval];
-}
+const FUND_AMOUNT = ethers.utils.parseEther("5");
 
 module.exports = async () => {
     const { deployer } = await getNamedAccounts();
+    const { deploy, log } = deployments;
+    const chainId = network.config.chainId;
 
     log(`Deploying Lottery...`);
     log(`------------------------------`);
 
-    let mockAddress;
+    let mockAddress, subscriptionId;
     if (developmentChains.includes(network.name) && chainId === 31337) {
-        const mockContract = await deployments.get("VRFCoordinatorV2Mock");
+        const mockContract = await ethers.getContract("VRFCoordinatorV2Mock");
         mockAddress = mockContract.address;
+        const txResponse = await mockContract.createSubscription();
+        const txReceipt = await txResponse.wait();
+        subscriptionId = txReceipt.events[0].args.subId;
+        await mockContract.fundSubscription(subscriptionId, FUND_AMOUNT);
     } else {
         mockAddress = networkConfig[chainId]["vrfCoordinatorV2"];
+        subscriptionId = networkConfig[chainId]["subscriptionId"];
     }
 
     let entranceFee = networkConfig[chainId]["entranceFee"];
     let gasLane = networkConfig[chainId]["gasLane"];
-    let subscriptionId = networkConfig[chainId]["subscriptionId"];
     let callbackGasLimit = networkConfig[chainId]["callbackGasLimit"];
     let keepersUpdateInterval = networkConfig[chainId]["keepersUpdateInterval"];
 
@@ -41,10 +39,17 @@ module.exports = async () => {
         keepersUpdateInterval,
     ];
 
-    await deploy("Lottery", {
+    const lottery = await deploy("Lottery", {
         from: deployer,
         args: args,
         log: true,
         waitConfirmations: network.config.blockConfirmations || 1,
     });
+
+    if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
+        log("Verifying...");
+        await verify(lottery.address, arguments);
+    }
 };
+
+module.exports.tags = ["all", "lottery"];

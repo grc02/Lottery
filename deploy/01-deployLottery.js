@@ -18,7 +18,6 @@ module.exports = async () => {
     log(`Deploying Lottery...`);
     log(`------------------------------`);
 
-    const args = [];
     let mockAddress;
     if (developmentChains.includes(network.name) && chainId === 31337) {
         const mockContract = await deployments.get("VRFCoordinatorV2Mock");
@@ -27,12 +26,20 @@ module.exports = async () => {
         mockAddress = networkConfig[chainId]["vrfCoordinatorV2"];
     }
 
-    args.push(mockAddress);
-    const argsData = getArgs();
+    let entranceFee = networkConfig[chainId]["entranceFee"];
+    let gasLane = networkConfig[chainId]["gasLane"];
+    let subscriptionId = networkConfig[chainId]["subscriptionId"];
+    let callbackGasLimit = networkConfig[chainId]["callbackGasLimit"];
+    let keepersUpdateInterval = networkConfig[chainId]["keepersUpdateInterval"];
 
-    for (const arg of argsData) {
-        args.push(arg);
-    }
+    const args = [
+        mockAddress,
+        entranceFee,
+        gasLane,
+        subscriptionId,
+        callbackGasLimit,
+        keepersUpdateInterval,
+    ];
 
     await deploy("Lottery", {
         from: deployer,

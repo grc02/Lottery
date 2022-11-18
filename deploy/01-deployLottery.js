@@ -12,9 +12,9 @@ module.exports = async () => {
     log(`Deploying Lottery...`);
     log(`------------------------------`);
 
-    let mockAddress, subscriptionId;
+    let mockAddress, subscriptionId, mockContract;
     if (developmentChains.includes(network.name) && chainId === 31337) {
-        const mockContract = await ethers.getContract("VRFCoordinatorV2Mock");
+        mockContract = await ethers.getContract("VRFCoordinatorV2Mock");
         mockAddress = mockContract.address;
         const txResponse = await mockContract.createSubscription();
         const txReceipt = await txResponse.wait();
@@ -45,6 +45,10 @@ module.exports = async () => {
         log: true,
         waitConfirmations: network.config.blockConfirmations || 1,
     });
+
+    if (developmentChains.includes(network.name) && chainId === 31337) {
+        await mockContract.addConsumer(subscriptionId.toNumber(), lottery.address);
+    }
 
     if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
         log("Verifying...");

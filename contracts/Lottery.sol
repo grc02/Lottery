@@ -92,10 +92,10 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
             bytes memory /* performData */
         )
     {
-        bool isOpen = (s_lotteryState == LotteryState(0));
+        bool isOpen = isLotteryOpen();
         bool timePassed = ((block.timestamp - s_lastTimeStamp) > i_interval);
         bool hasParticipants = (s_participants.length > 0);
-        bool hasBalance = (address(this).balance > 0);
+        bool hasBalance = lotteryHasBalance();
         upkeepNeeded = (isOpen && timePassed && hasParticipants && hasBalance);
     }
 
@@ -141,6 +141,20 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
             revert Lottery__TransferFailed();
         }
         emit winnerPicked(winner);
+    }
+
+    function isLotteryOpen() internal view returns (bool) {
+        if (s_lotteryState == LotteryState(0)) {
+            return true;
+        }
+        revert Lottery__NotOpen();
+    }
+
+    function lotteryHasBalance() internal view returns (bool) {
+        if (address(this).balance > 0) {
+            return true;
+        }
+        revert Lottery__NotEnoughETH();
     }
 
     /* Getter Functions */

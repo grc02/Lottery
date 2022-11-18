@@ -1,5 +1,5 @@
 const { expect, assert } = require("chai");
-const { ethers, getNamedAccounts, deployments, network } = require("hardhat");
+const { ethers, deployments, network } = require("hardhat");
 const { networkConfig, developmentChains } = require("../../helper-hardhat-config");
 
 !developmentChains.includes(network.name)
@@ -62,9 +62,19 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
 
           describe("checkUpkeep", function () {
               it("returns false if people haven't sent any ETH", async () => {
-                  const response = await lottery.callStatic.checkUpkeep("0x");
-                  expect(response[0]).to.be.equal(false);
-                  assert.equal(response[1], "0x");
+                  await expect(lottery.callStatic.checkUpkeep("0x")).to.be.revertedWith(
+                      "Lottery__NotEnoughETH"
+                  );
+              });
+
+              it("returns false if lottery is not in an open state", async () => {
+                  await lottery.enterLottery({ value: entranceFee });
+                  await network.provider.send("evm_increaseTime", [interval.toNumber() + 1]);
+                  await network.provider.send("evm_mine", []);
+                  await lottery.performUpkeep([]);
+                  await expect(lottery.callStatic.checkUpkeep([])).to.be.revertedWith(
+                      "Lottery__NotOpen"
+                  );
               });
           });
       });

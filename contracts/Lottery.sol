@@ -102,10 +102,6 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
     function performUpkeep(
         bytes calldata /* performData */
     ) external override {
-        if ((block.timestamp - s_lastTimeStamp) > i_interval) {
-            s_lastTimeStamp = block.timestamp;
-        }
-
         (bool isUpkeepCalled, ) = checkUpkeep("");
 
         if (!isUpkeepCalled) {

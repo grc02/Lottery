@@ -32,7 +32,7 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
           });
 
           describe("enterLottery", function () {
-              it("send sufficient amount of funds", async () => {
+              it("sends insufficient amount of funds", async () => {
                   await expect(lottery.enterLottery()).to.be.revertedWith("Lottery__NotEnoughETH");
               });
 
@@ -46,6 +46,16 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                   await expect(lottery.enterLottery({ value: entranceFee })).to.emit(
                       lottery,
                       "lotteryEntered"
+                  );
+              });
+
+              it("doesn't allow entrance when lottery has calculating state", async () => {
+                  await lottery.enterLottery({ value: entranceFee });
+                  await network.provider.send("evm_increaseTime", [interval.toNumber() + 1]);
+                  await network.provider.send("evm_mine", []);
+                  await lottery.performUpkeep([]);
+                  await expect(lottery.enterLottery({ value: entranceFee })).to.be.revertedWith(
+                      "Lottery__NotOpen"
                   );
               });
           });

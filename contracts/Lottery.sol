@@ -82,7 +82,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
     }
 
     function checkUpkeep(
-        bytes calldata /* checkData */
+        bytes memory /* checkData */
     )
         public
         view
@@ -99,12 +99,14 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         upkeepNeeded = (isOpen && timePassed && hasParticipants && hasBalance);
     }
 
-    function performUpkeep(bytes calldata performData) external override {
+    function performUpkeep(
+        bytes calldata /* performData */
+    ) external override {
         if ((block.timestamp - s_lastTimeStamp) > i_interval) {
             s_lastTimeStamp = block.timestamp;
         }
 
-        (bool isUpkeepCalled, ) = checkUpkeep(performData);
+        (bool isUpkeepCalled, ) = checkUpkeep("");
 
         if (isUpkeepCalled) {
             revert Lottery__checkUpkeepNotCalled(

@@ -26,7 +26,7 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                       networkConfig[chainId]["keepersUpdateInterval"]
                   );
                   let _entranceFee = networkConfig[chainId]["entranceFee"].toString();
-                  assert(entranceFee, _entranceFee);
+                  assert.equal(entranceFee, _entranceFee);
                   expect(lotteryState.toString()).to.be.equal("0");
               });
           });
@@ -57,6 +57,14 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                   await expect(lottery.enterLottery({ value: entranceFee })).to.be.revertedWith(
                       "Lottery__NotOpen"
                   );
+              });
+          });
+
+          describe("checkUpkeep", function () {
+              it("returns false if people haven't sent any ETH", async () => {
+                  const response = await lottery.callStatic.checkUpkeep("0x");
+                  expect(response[0]).to.be.equal(false);
+                  assert.equal(response[1], "0x");
               });
           });
       });

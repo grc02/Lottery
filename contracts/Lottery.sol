@@ -108,7 +108,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
 
         (bool isUpkeepCalled, ) = checkUpkeep("");
 
-        if (isUpkeepCalled) {
+        if (!isUpkeepCalled) {
             revert Lottery__checkUpkeepNotCalled(
                 uint256(s_lotteryState),
                 block.timestamp,
@@ -116,7 +116,6 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
                 address(this).balance
             );
         }
-
         s_lotteryState = LotteryState.CALCULATING;
         uint256 requestId = i_VRFCoordinator.requestRandomWords(
             i_gasLane,
@@ -125,7 +124,6 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
             i_callbackGasLimit,
             NUM_WORDS
         );
-
         emit upkeepPerformed(requestId);
     }
 

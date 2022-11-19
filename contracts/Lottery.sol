@@ -15,6 +15,8 @@ error Lottery__checkUpkeepNotCalled(
     uint256 numOfParticipants,
     uint256 contractBalance
 );
+error Lottery__NotEnoughTimePassed();
+error Lottery__NotParticipants();
 
 /**@title Lottery Contract
  * @author Georgi Chonkov
@@ -92,11 +94,14 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
             bytes memory /* performData */
         )
     {
-        bool isOpen = isLotteryOpen();
-        bool timePassed = ((block.timestamp - s_lastTimeStamp) > i_interval);
-        bool hasParticipants = (s_participants.length > 0);
         bool hasBalance = lotteryHasBalance();
-        upkeepNeeded = (isOpen && timePassed && hasParticipants && hasBalance);
+        bool isOpen = isLotteryOpen();
+        bool timePassed = timeHasPassed();
+        bool hasAnyParticipants = hasParticipants();
+        upkeepNeeded = (isOpen &&
+            timePassed &&
+            hasAnyParticipants &&
+            hasBalance);
     }
 
     function performUpkeep(
@@ -155,6 +160,20 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
             return true;
         }
         revert Lottery__NotEnoughETH();
+    }
+
+    function timeHasPassed() internal view returns (bool) {
+        if ((block.timestamp - s_lastTimeStamp) > i_interval) {
+            return true;
+        }
+        revert Lottery__NotEnoughTimePassed();
+    }
+
+    function hasParticipants() internal view returns (bool) {
+        if (s_participants.length > 0) {
+            return true;
+        }
+        revert Lottery__NotParticipants();
     }
 
     /* Getter Functions */

@@ -72,9 +72,32 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                   await network.provider.send("evm_increaseTime", [interval.toNumber() + 1]);
                   await network.provider.send("evm_mine", []);
                   await lottery.performUpkeep([]);
+                  lotteryState = await lottery.getLotteryState();
                   await expect(lottery.callStatic.checkUpkeep([])).to.be.revertedWith(
                       "Lottery__NotOpen"
                   );
+                  assert.equal(lotteryState.toString(), "1");
+              });
+
+              it("returns false if enough time hasn't passed", async () => {
+                  await lottery.enterLottery({ value: entranceFee });
+                  await network.provider.send("evm_increaseTime", [
+                      interval.toNumber() - interval / 2,
+                  ]);
+                  await network.provider.request({ method: "evm_mine", params: [] });
+                  await expect(lottery.callStatic.checkUpkeep("0x")).to.be.revertedWith(
+                      "Lottery__NotEnoughTimePassed"
+                  );
+              });
+
+              it("returns true if all conditions are met", async () => {
+                  await lottery.enterLottery({ value: entranceFee });
+                  await network.provider.send("evm_increaseTime", [
+                      interval.toNumber() + interval / 2,
+                  ]);
+                  await network.provider.request({ method: "evm_mine", params: [] });
+                  const upkeepCalled = await lottery.callStatic.checkUpkeep([]);
+                  assert(upkeepCalled);
               });
           });
       });

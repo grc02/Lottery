@@ -97,11 +97,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         bool hasBalance = lotteryHasBalance();
         bool isOpen = isLotteryOpen();
         bool timePassed = timeHasPassed();
-        bool hasAnyParticipants = hasParticipants();
-        upkeepNeeded = (isOpen &&
-            timePassed &&
-            hasAnyParticipants &&
-            hasBalance);
+        upkeepNeeded = (isOpen && timePassed && hasBalance);
     }
 
     function performUpkeep(
@@ -167,13 +163,6 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
             return true;
         }
         revert Lottery__NotEnoughTimePassed();
-    }
-
-    function hasParticipants() internal view returns (bool) {
-        if (s_participants.length > 0) {
-            return true;
-        }
-        revert Lottery__NotParticipants();
     }
 
     /* Getter Functions */

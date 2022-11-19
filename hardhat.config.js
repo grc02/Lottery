@@ -40,4 +40,7 @@ module.exports = {
             default: 2,
         },
     },
+    gasReporter: {
+        enabled: false,
+    },
 };

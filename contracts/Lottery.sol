@@ -16,7 +16,6 @@ error Lottery__checkUpkeepNotCalled(
     uint256 contractBalance
 );
 error Lottery__NotEnoughTimePassed();
-error Lottery__NotParticipants();
 
 /**@title Lottery Contract
  * @author Georgi Chonkov
@@ -83,6 +82,15 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         emit lotteryEntered(msg.sender);
     }
 
+    /**
+     * @dev This is the function that the Chainlink Keeper nodes call
+     * they look for `upkeepNeeded` to return True.
+     * the following should be true for this to return true:
+     * 1. The contract has ETH (equal to having any participants).
+     * 2. The lottery is open.
+     * 3. The time interval has passed between lottery runs.
+     * 4. Implicity, your subscription is funded with LINK.
+     */
     function checkUpkeep(
         bytes memory /* checkData */
     )
@@ -100,6 +108,10 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         upkeepNeeded = (isOpen && timePassed && hasBalance);
     }
 
+    /**
+     * @dev Once `checkUpkeep` is returning `true`, this function is called
+     * and it kicks off a Chainlink VRF call to get a random winner.
+     */
     function performUpkeep(
         bytes calldata /* performData */
     ) external override {
@@ -124,6 +136,10 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         emit upkeepPerformed(requestId);
     }
 
+    /**
+     * @dev This is the function that Chainlink VRF node
+     * calls to send the money to the random winner.
+     */
     function fulfillRandomWords(
         uint256, /* requestId */
         uint256[] memory randomWords
@@ -144,6 +160,11 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         emit winnerPicked(winner);
     }
 
+    /**
+     * @dev The following 3 internal functions are used
+     * are used in the checkUpkeep function to make sure
+     * an upkeep is performed only when all conditions are met
+     */
     function isLotteryOpen() internal view returns (bool) {
         if (s_lotteryState == LotteryState(0)) {
             return true;

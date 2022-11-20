@@ -127,7 +127,7 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                   await network.provider.request({ method: "evm_mine", params: [] });
                   const txResponse = await lottery.performUpkeep("0x");
                   const txReceipt = await txResponse.wait(1);
-                  const requestId = txReceipt.events[1].args.requestedId;
+                  const requestId = txReceipt.events[1].args.requestId;
                   expect(requestId > 0);
               });
           });
@@ -137,6 +137,57 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                   await lottery.enterLottery({ value: entranceFee });
                   await network.provider.send("evm_increaseTime", [interval.toNumber() + 1]);
                   await network.provider.request({ method: "evm_mine", params: [] });
+              });
+              it("can only be called after performupkeep", async () => {
+                  await expect(
+                      mockCoordinator.fulfillRandomWords(0, lottery.address)
+                  ).to.be.revertedWith("nonexistent request");
+                  await expect(
+                      mockCoordinator.fulfillRandomWords(1, lottery.address)
+                  ).to.be.revertedWith("nonexistent request");
+              });
+
+              it.only("picks a winner, resets, and sends money", async () => {
+                  const additionalEntrances = 3;
+                  const startingIndex = 2;
+                  let depositGasCost;
+                  for (let i = startingIndex; i < startingIndex + additionalEntrances; i++) {
+                      await lottery.connect(accounts[i]).enterLottery({ value: entranceFee });
+                  }
+                  const startingTimeStamp = await lottery.s_lastTimeStamp();
+
+                  await new Promise(async (resolve, reject) => {
+                      lottery.once("winnerPicked", async () => {
+                          console.log("WinnerPicked event fired!");
+                          try {
+                              const recentWinner = await lottery.getLatestWinner();
+                              lotteryState = await lottery.getLotteryState();
+                              const winnerBalance = await accounts[2].getBalance();
+                              const endingTimeStamp = await lottery.s_lastTimeStamp();
+                              const finalBalance = startingBalance
+                                  .add(entranceFee.mul(additionalEntrances))
+                                  .sub(withdrawGasCost)
+                                  .toString();
+                              await expect(lottery.getPlayer(0)).to.be.reverted;
+                              assert.equal(recentWinner.toString(), accounts[2].address);
+                              assert.equal(lotteryState, 0);
+                              //   assert.equal(winnerBalance.toString(), finalBalance);
+                              assert(endingTimeStamp > startingTimeStamp);
+                              resolve();
+                          } catch (error) {
+                              reject(error);
+                          }
+                      });
+                      const tx = await lottery.performUpkeep([]);
+                      const txReceipt = await tx.wait(1);
+                      const { gasUsed, effectiveGasPrice } = txReceipt;
+                      const withdrawGasCost = gasUsed.mul(effectiveGasPrice);
+                      const startingBalance = await accounts[2].getBalance();
+                      await mockCoordinator.fulfillRandomWords(
+                          txReceipt.events[1].args.requestId,
+                          lottery.address
+                      );
+                  });
               });
           });
       });

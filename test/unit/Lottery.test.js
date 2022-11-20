@@ -100,7 +100,7 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
           describe("performUpkeep", function () {
               it("throws an error when not all conditions are met", async () => {
                   await expect(lottery.performUpkeep([])).to.be.revertedWith(
-                      "Lottery__checkUpkeepNotPassed"
+                      `Lottery__checkUpkeepNotPassed`
                   );
               });
 
@@ -129,6 +129,14 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                   const txReceipt = await txResponse.wait(1);
                   const requestId = txReceipt.events[1].args.requestedId;
                   expect(requestId > 0);
+              });
+          });
+
+          describe("fulfillRandomWords", function () {
+              beforeEach(async () => {
+                  await lottery.enterLottery({ value: entranceFee });
+                  await network.provider.send("evm_increaseTime", [interval.toNumber() + 1]);
+                  await network.provider.request({ method: "evm_mine", params: [] });
               });
           });
       });

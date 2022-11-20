@@ -9,7 +9,7 @@ import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
 error Lottery__NotEnoughETH();
 error Lottery__TransferFailed();
 error Lottery__NotOpen();
-error Lottery__checkUpkeepNotCalled(
+error Lottery__checkUpkeepNotPassed(
     uint256 lotteryState,
     uint256 currentTimeStamp,
     uint256 numOfParticipants,
@@ -117,7 +117,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         (bool isUpkeepCalled, ) = checkUpkeep("");
 
         if (!isUpkeepCalled) {
-            revert Lottery__checkUpkeepNotCalled(
+            revert Lottery__checkUpkeepNotPassed(
                 uint256(s_lotteryState),
                 block.timestamp,
                 s_participants.length,

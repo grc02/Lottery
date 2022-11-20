@@ -96,4 +96,39 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                   assert(upkeepCalled);
               });
           });
+
+          describe("performUpkeep", function () {
+              it("throws an error when not all conditions are met", async () => {
+                  await expect(lottery.performUpkeep([])).to.be.revertedWith(
+                      "Lottery__checkUpkeepNotPassed"
+                  );
+              });
+
+              it("can only run if checkupkeep is true", async () => {
+                  await lottery.enterLottery({ value: entranceFee });
+                  await network.provider.send("evm_increaseTime", [interval.toNumber() + 1]);
+                  await network.provider.request({ method: "evm_mine", params: [] });
+                  const tx = await lottery.performUpkeep("0x");
+                  assert(tx);
+              });
+
+              it("changes the state of the lottery from open to calculating", async () => {
+                  await lottery.enterLottery({ value: entranceFee });
+                  await network.provider.send("evm_increaseTime", [interval.toNumber() + 1]);
+                  await network.provider.request({ method: "evm_mine", params: [] });
+                  const tx = await lottery.performUpkeep("0x");
+                  lotteryState = await lottery.getLotteryState();
+                  assert.equal(lotteryState.toString(), "1");
+              });
+
+              it("emits an event with a requestId as param", async () => {
+                  await lottery.enterLottery({ value: entranceFee });
+                  await network.provider.send("evm_increaseTime", [interval.toNumber() + 1]);
+                  await network.provider.request({ method: "evm_mine", params: [] });
+                  const txResponse = await lottery.performUpkeep("0x");
+                  const txReceipt = await txResponse.wait(1);
+                  const requestId = txReceipt.events[1].args.requestedId;
+                  expect(requestId > 0);
+              });
+          });
       });

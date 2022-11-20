@@ -62,9 +62,8 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
 
           describe("checkUpkeep", function () {
               it("returns false if people haven't sent any ETH", async () => {
-                  await expect(lottery.callStatic.checkUpkeep("0x")).to.be.revertedWith(
-                      "Lottery__NotEnoughETH"
-                  );
+                  const { upkeepNeeded } = await lottery.callStatic.checkUpkeep("0x");
+                  assert(!upkeepNeeded);
               });
 
               it("returns false if lottery is not in an open state", async () => {
@@ -72,11 +71,9 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                   await network.provider.send("evm_increaseTime", [interval.toNumber() + 1]);
                   await network.provider.send("evm_mine", []);
                   await lottery.performUpkeep([]);
+                  const { upkeepNeeded } = await lottery.callStatic.checkUpkeep("0x");
                   lotteryState = await lottery.getLotteryState();
-                  await expect(lottery.callStatic.checkUpkeep([])).to.be.revertedWith(
-                      "Lottery__NotOpen"
-                  );
-                  assert.equal(lotteryState.toString(), "1");
+                  assert.equal(lotteryState.toString(), "1", upkeepNeeded === false);
               });
 
               it("returns false if enough time hasn't passed", async () => {
@@ -85,9 +82,8 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                       interval.toNumber() - interval / 2,
                   ]);
                   await network.provider.request({ method: "evm_mine", params: [] });
-                  await expect(lottery.callStatic.checkUpkeep("0x")).to.be.revertedWith(
-                      "Lottery__NotEnoughTimePassed"
-                  );
+                  const { upkeepNeeded } = await lottery.callStatic.checkUpkeep("0x");
+                  expect(upkeepNeeded).to.be.equal(false);
               });
 
               it("returns true if all conditions are met", async () => {

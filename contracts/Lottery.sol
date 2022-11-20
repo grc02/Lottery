@@ -15,7 +15,6 @@ error Lottery__checkUpkeepNotCalled(
     uint256 numOfParticipants,
     uint256 contractBalance
 );
-error Lottery__NotEnoughTimePassed();
 
 /**@title Lottery Contract
  * @author Georgi Chonkov
@@ -169,21 +168,21 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         if (s_lotteryState == LotteryState(0)) {
             return true;
         }
-        revert Lottery__NotOpen();
+        return false;
     }
 
     function lotteryHasBalance() internal view returns (bool) {
         if (address(this).balance > 0) {
             return true;
         }
-        revert Lottery__NotEnoughETH();
+        return false;
     }
 
     function timeHasPassed() internal view returns (bool) {
         if ((block.timestamp - s_lastTimeStamp) > i_interval) {
             return true;
         }
-        revert Lottery__NotEnoughTimePassed();
+        return false;
     }
 
     /* Getter Functions */

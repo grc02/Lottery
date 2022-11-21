@@ -12,7 +12,6 @@ error Lottery__NotOpen();
 error Lottery__checkUpkeepNotPassed(
     uint256 lotteryState,
     uint256 currentTimeStamp,
-    uint256 numOfParticipants,
     uint256 contractBalance
 );
 
@@ -47,7 +46,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
 
     /* Events */
     event lotteryEntered(address indexed participant);
-    event upkeepPerformed(uint256 indexed requestedId);
+    event upkeepPerformed(uint256 indexed requestId);
     event winnerPicked(address indexed latestWinner);
 
     /* Functions */
@@ -120,7 +119,6 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
             revert Lottery__checkUpkeepNotPassed(
                 uint256(s_lotteryState),
                 block.timestamp,
-                s_participants.length,
                 address(this).balance
             );
         }

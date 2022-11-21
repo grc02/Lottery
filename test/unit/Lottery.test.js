@@ -147,10 +147,9 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                   ).to.be.revertedWith("nonexistent request");
               });
 
-              it.only("picks a winner, resets, and sends money", async () => {
+              it("picks a winner, resets, and sends money", async () => {
                   const additionalEntrances = 3;
                   const startingIndex = 2;
-                  let depositGasCost;
                   for (let i = startingIndex; i < startingIndex + additionalEntrances; i++) {
                       await lottery.connect(accounts[i]).enterLottery({ value: entranceFee });
                   }
@@ -165,23 +164,20 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                               const winnerBalance = await accounts[2].getBalance();
                               const endingTimeStamp = await lottery.s_lastTimeStamp();
                               const finalBalance = startingBalance
-                                  .add(entranceFee.mul(additionalEntrances))
-                                  .sub(withdrawGasCost)
+                                  .add(entranceFee.mul(additionalEntrances + 1))
                                   .toString();
                               await expect(lottery.getPlayer(0)).to.be.reverted;
                               assert.equal(recentWinner.toString(), accounts[2].address);
                               assert.equal(lotteryState, 0);
-                              //   assert.equal(winnerBalance.toString(), finalBalance);
+                              assert.equal(winnerBalance.toString(), finalBalance);
                               assert(endingTimeStamp > startingTimeStamp);
                               resolve();
                           } catch (error) {
                               reject(error);
                           }
                       });
-                      const tx = await lottery.performUpkeep([]);
+                      const tx = await lottery.performUpkeep("0x");
                       const txReceipt = await tx.wait(1);
-                      const { gasUsed, effectiveGasPrice } = txReceipt;
-                      const withdrawGasCost = gasUsed.mul(effectiveGasPrice);
                       const startingBalance = await accounts[2].getBalance();
                       await mockCoordinator.fulfillRandomWords(
                           txReceipt.events[1].args.requestId,

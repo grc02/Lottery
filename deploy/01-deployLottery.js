@@ -52,7 +52,7 @@ module.exports = async () => {
 
     if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
         log("Verifying...");
-        await verify(lottery.address, arguments);
+        await verify(lottery.address, args);
     }
 };
 

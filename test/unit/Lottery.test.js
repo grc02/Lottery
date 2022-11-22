@@ -4,7 +4,7 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
 
 !developmentChains.includes(network.name)
     ? describe.skip
-    : describe("Lottery", function () {
+    : describe("Lottery unit tests", function () {
           let lottery, mockCoordinator, entranceFee, interval, lotteryState, accounts;
           chainId = network.config.chainId;
 
@@ -45,7 +45,7 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
               it("emits an event when a player enters", async () => {
                   await expect(lottery.enterLottery({ value: entranceFee })).to.emit(
                       lottery,
-                      "lotteryEntered"
+                      "LotteryEntered"
                   );
               });
 
@@ -156,7 +156,7 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                   const startingTimeStamp = await lottery.s_lastTimeStamp();
 
                   await new Promise(async (resolve, reject) => {
-                      lottery.once("winnerPicked", async () => {
+                      lottery.once("WinnerPicked", async () => {
                           console.log("WinnerPicked event fired!");
                           try {
                               const recentWinner = await lottery.getLatestWinner();
@@ -166,11 +166,13 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                               const finalBalance = startingBalance
                                   .add(entranceFee.mul(additionalEntrances + 1))
                                   .toString();
+                              const numberOfPlayers = await lottery.getNumberOfPlayers();
                               await expect(lottery.getPlayer(0)).to.be.reverted;
                               assert.equal(recentWinner.toString(), accounts[2].address);
                               assert.equal(lotteryState, 0);
                               assert.equal(winnerBalance.toString(), finalBalance);
                               assert(endingTimeStamp > startingTimeStamp);
+                              assert.equal(numberOfPlayers, 0);
                               resolve();
                           } catch (error) {
                               reject(error);

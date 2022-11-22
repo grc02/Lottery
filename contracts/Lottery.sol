@@ -188,7 +188,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         return i_entranceFee;
     }
 
-    function getPlayer(uint256 index) external view returns (address) {
+    function getParticipant(uint256 index) external view returns (address) {
         return s_participants[index];
     }
 
@@ -204,7 +204,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         return i_interval;
     }
 
-    function getNumberOfPlayers() public view returns (uint256) {
+    function getNumberOfParticipants() public view returns (uint256) {
         return s_participants.length;
     }
 }

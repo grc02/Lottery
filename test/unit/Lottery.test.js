@@ -36,13 +36,13 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                   await expect(lottery.enterLottery()).to.be.revertedWith("Lottery__NotEnoughETH");
               });
 
-              it("records player when they enter", async () => {
+              it("records participant when they enter", async () => {
                   await lottery.connect(accounts[1]).enterLottery({ value: entranceFee });
-                  const player = await lottery.getPlayer(0);
-                  assert.equal(accounts[1].address, player);
+                  const participant = await lottery.getParticipant(0);
+                  assert.equal(accounts[1].address, participant);
               });
 
-              it("emits an event when a player enters", async () => {
+              it("emits an event when a participant enters", async () => {
                   await expect(lottery.enterLottery({ value: entranceFee })).to.emit(
                       lottery,
                       "LotteryEntered"
@@ -166,13 +166,13 @@ const { networkConfig, developmentChains } = require("../../helper-hardhat-confi
                               const finalBalance = startingBalance
                                   .add(entranceFee.mul(additionalEntrances + 1))
                                   .toString();
-                              const numberOfPlayers = await lottery.getNumberOfPlayers();
-                              await expect(lottery.getPlayer(0)).to.be.reverted;
+                              const numberOfParticipants = await lottery.getNumberOfParticipants();
+                              await expect(lottery.getParticipant(0)).to.be.reverted;
                               assert.equal(recentWinner.toString(), accounts[2].address);
                               assert.equal(lotteryState, 0);
                               assert.equal(winnerBalance.toString(), finalBalance);
                               assert(endingTimeStamp > startingTimeStamp);
-                              assert.equal(numberOfPlayers, 0);
+                              assert.equal(numberOfParticipants, 0);
                               resolve();
                           } catch (error) {
                               reject(error);

@@ -35,7 +35,7 @@ developmentChains.includes(network.name)
                               const winnerEndingBalance = await accounts[0].getBalance();
                               const endingTimeStamp = await lottery.s_lastTimeStamp();
 
-                              await expect(lottery.getPlayer(0)).to.be.reverted;
+                              await expect(lottery.getParticipant(0)).to.be.reverted;
                               assert.equal(latestWinner.toString(), accounts[0].address);
                               assert.equal(lotteryState, 0);
                               assert.equal(

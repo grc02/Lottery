@@ -36,7 +36,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
     uint32 private immutable i_callbackGasLimit;
     uint32 private constant NUM_WORDS = 1;
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
-    uint256 public immutable i_interval;
+    uint256 private immutable i_interval;
 
     // Lottery contract variables
     address[] internal s_participants;
@@ -45,9 +45,9 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
     LotteryState private s_lotteryState;
 
     /* Events */
-    event lotteryEntered(address indexed participant);
-    event upkeepPerformed(uint256 indexed requestId);
-    event winnerPicked(address indexed latestWinner);
+    event LotteryEntered(address indexed participant);
+    event UpkeepPerformed(uint256 indexed requestId);
+    event WinnerPicked(address indexed latestWinner);
 
     /* Functions */
     constructor(
@@ -77,7 +77,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
             revert Lottery__NotOpen();
         }
         s_participants.push(msg.sender);
-        emit lotteryEntered(msg.sender);
+        emit LotteryEntered(msg.sender);
     }
 
     /**
@@ -130,7 +130,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
             i_callbackGasLimit,
             NUM_WORDS
         );
-        emit upkeepPerformed(requestId);
+        emit UpkeepPerformed(requestId);
     }
 
     /**
@@ -154,7 +154,7 @@ contract Lottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         if (!success) {
             revert Lottery__TransferFailed();
         }
-        emit winnerPicked(winner);
+        emit WinnerPicked(winner);
     }
 
     /**

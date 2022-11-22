@@ -7,7 +7,8 @@ require("hardhat-contract-sizer");
 require("dotenv").config();
 
 const GOERLI_RPC_URL = process.env.GOERLI_RPC_URL || "";
-const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
+const PRIVATE_KEY = process.env.PRIVATE_KEY || "0x";
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "";
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -19,7 +20,8 @@ module.exports = {
         goerli: {
             chainId: 5,
             url: GOERLI_RPC_URL,
-            accounts: [PRIVATE_KEY],
+            accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
+            saveDeployments: true,
         },
     },
     solidity: {
@@ -28,6 +30,12 @@ module.exports = {
                 version: "0.8.17",
             },
         ],
+    },
+    etherscan: {
+        // yarn hardhat verify --network <NETWORK> <CONTRACT_ADDRESS> <CONSTRUCTOR_PARAMETERS>
+        apiKey: {
+            goerli: ETHERSCAN_API_KEY,
+        },
     },
     namedAccounts: {
         deployer: {
@@ -41,6 +49,12 @@ module.exports = {
         },
     },
     gasReporter: {
-        enabled: false,
+        enabled: true,
+        currency: "USD",
+        outputFile: "gas-report.txt",
+        noColors: true,
+    },
+    mocha: {
+        timeout: 300000,
     },
 };

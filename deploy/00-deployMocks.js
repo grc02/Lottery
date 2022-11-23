@@ -13,6 +13,11 @@ module.exports = async () => {
         log(`Deploying Mocks...`);
         log(`------------------------------`);
 
+        await deploy("LinkToken", {
+            from: deployer,
+            log: true,
+        });
+
         await deploy("VRFCoordinatorV2Mock", {
             from: deployer,
             args: args,

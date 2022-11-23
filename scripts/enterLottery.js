@@ -5,7 +5,7 @@ async function enterLottery() {
     const entranceFee = await lottery.getEntranceFee();
     const tx = await lottery.enterLottery({ value: entranceFee });
     await tx.wait(1);
-    console.log("Raffle Entered!");
+    console.log("Lottery Entered!");
 }
 
 enterLottery()
